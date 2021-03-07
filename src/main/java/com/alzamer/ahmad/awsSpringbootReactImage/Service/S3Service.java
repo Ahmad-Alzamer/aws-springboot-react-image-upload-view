@@ -2,6 +2,7 @@ package com.alzamer.ahmad.awsSpringbootReactImage.Service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -29,11 +30,9 @@ public class S3Service
     {
 
         log.info("recived request to list content of bucket");
-        s3Client.listObjects(this.bucketName)
-                .getObjectSummaries().stream()
-                .forEach(System.out::println);
-        return s3Client.listObjects(this.bucketName)
-                .getObjectSummaries().stream()
+        List<S3ObjectSummary> rslt= s3Client.listObjects(this.bucketName).getObjectSummaries();
+        log.trace("content of bucket {} : {}",this.bucketName,rslt);
+        return rslt.stream()
                 .map(s3ObjectSummary -> s3ObjectSummary.getKey())
                 .collect(Collectors.toList());
     }

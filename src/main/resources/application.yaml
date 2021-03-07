@@ -10,3 +10,7 @@ cloud:
 
 custom:
   bucket-name: aws-springboot-react
+spring:
+  data:
+    mongodb:
+      database: react_s3_spring
