@@ -1,1 +1,12 @@
+cloud:
+  aws:
+    credentials:
+      profile-name: test
+    region:
+      static: us-east-1
+      auto: false
+#    stack:
+#      auto: false
 
+custom:
+  bucket-name: aws-springboot-react
