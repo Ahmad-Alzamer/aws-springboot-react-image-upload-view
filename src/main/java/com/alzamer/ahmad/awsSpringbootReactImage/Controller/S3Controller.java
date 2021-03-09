@@ -1,13 +1,19 @@
 package com.alzamer.ahmad.awsSpringbootReactImage.Controller;
 
+import com.alzamer.ahmad.awsSpringbootReactImage.Exception.FileNotProvidedException;
 import com.alzamer.ahmad.awsSpringbootReactImage.Service.S3Service;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.HandlerMapping;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -23,23 +29,32 @@ public class S3Controller
     }
 
 
-    @GetMapping
-    public List<String> listBucketContent()
+    @GetMapping({"/**",""})
+    public List<String> listBucketContent(HttpServletRequest request)
     {
-        return  s3Service.listBucketContent();
+        String pattern = (String)request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+
+        String prefix = new AntPathMatcher().extractPathWithinPattern(pattern,
+                request.getServletPath());
+        return  s3Service.listBucketContent(Optional.ofNullable(prefix),Optional.empty());
     }
 
-    @GetMapping("/create")
-    public void saveToBucket() throws FileNotFoundException
+    @PostMapping
+    public void saveToBucket( @RequestParam Optional<MultipartFile> file) throws IOException
     {
-        FileInputStream in= new FileInputStream("C:\\Users\\Ahmad Alzamer\\Desktop\\tut\\DevOps\\k8s\\k8s-commands.txt");
-        Map<String,String> metaData=new HashMap<>();
-        metaData.put("create_timestamp", LocalDateTime.now().toString());
-        Optional<Map<String,String>> metaDataOptional= Optional.of(metaData);
-        String fileName=UUID.randomUUID()+".txt";
+        MultipartFile _file=file.orElseThrow(FileNotProvidedException::new);
+        s3Service.uploadToBucket(
+                _file.getOriginalFilename(),
+                _file.getContentType(),
+                new BufferedInputStream(_file.getInputStream())
+        );
 
-        s3Service.updateToBucket(fileName,metaDataOptional,in);
+    }
 
+    @DeleteMapping({"/{fileName}",""})
+    public void deleteFromBucket(@PathVariable(required = false) Optional<String> fileName)
+    {
+        fileName.ifPresent(s3Service::deleteFromBucket);
     }
 
 }
